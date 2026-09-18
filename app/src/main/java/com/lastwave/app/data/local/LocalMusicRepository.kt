@@ -1,3 +1,5 @@
+// Copyright (C) 2026 Anshuman X (maxxcodebug)
+
 package com.lastwave.app.data.local
 
 import android.content.Context

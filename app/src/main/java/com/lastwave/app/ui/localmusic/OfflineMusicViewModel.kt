@@ -1,3 +1,5 @@
+// Copyright (C) 2026 Anshuman X (maxxcodebug)
+
 package com.lastwave.app.ui.localmusic
 
 import android.net.Uri
