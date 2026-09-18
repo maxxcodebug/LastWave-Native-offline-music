@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -159,7 +160,7 @@ fun MainShell(
     val offlineModeViewModel: OfflineModeViewModel = hiltViewModel()
     val offlineEnabled by offlineModeViewModel.enabled.collectAsStateWithLifecycle()
     val musicPlayer = LocalMusicPlayer.current
-    var offlineTransitionTarget by remember { androidx.compose.runtime.mutableStateOf<Boolean?>(null) }
+    val offlineTransitionTarget = remember { androidx.compose.runtime.mutableStateOf<Boolean?>(null) }
     val updateInfo by mainShellViewModel.updateInfo.collectAsStateWithLifecycle()
     val showUpdateBanner = updateInfo.isUpdateAvailable && !updateInfo.isDismissed
     val navigationBackdrop = if (isLiquidGlassBackdropSupported()) rememberLayerBackdrop() else null
@@ -168,7 +169,7 @@ fun MainShell(
         if (offlineEnabled) {
             OfflineMusicScreen(
                 onBack = {
-                    if (offlineTransitionTarget == null) offlineTransitionTarget = false
+                    if (offlineTransitionTarget.value == null) offlineTransitionTarget.value = false
                 },
             )
         } else {
@@ -247,7 +248,7 @@ fun MainShell(
                     musicPlayer.stopAndClear()
                     offlineModeViewModel.setOfflineMode(target)
                 },
-                onFinished = { offlineTransitionTarget = null },
+                onFinished = { offlineTransitionTarget.value = null },
             )
         }
     }
