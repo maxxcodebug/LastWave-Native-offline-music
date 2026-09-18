@@ -41,6 +41,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Bolt
@@ -1270,6 +1274,51 @@ fun SettingsScreen(
                     AboutCard(versionName = appVersionName(context))
 
                     SettingsActionCard(
+                        icon = Icons.Filled.Person,
+                        iconContainer = MaterialTheme.colorScheme.primaryContainer,
+                        iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        title = "Anshuman X",
+                        subtitle = "Offline Music • maxxcodebug",
+                        onClick = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://github.com/maxxcodebug"),
+                            )
+                            if (!startActivitySafely(context, intent)) {
+                                viewModel.showToast("No browser is available")
+                            }
+                        },
+                    )
+
+                    SettingsActionCard(
+                        icon = Icons.Filled.MusicNote,
+                        iconContainer = MaterialTheme.colorScheme.secondaryContainer,
+                        iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        title = "Offline Music",
+                        subtitle = "Local folder scanning, library & Media3 playback",
+                        onClick = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://github.com/maxxcodebug/LastWave-Native-offline-music"),
+                            )
+                            if (!startActivitySafely(context, intent)) {
+                                viewModel.showToast("No browser is available")
+                            }
+                        },
+                    )
+
+                    SettingsActionCard(
+                        icon = Icons.Filled.Send,
+                        iconContainer = MaterialTheme.colorScheme.tertiaryContainer,
+                        iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+                        title = "Contact Anshuman X",
+                        subtitle = "@AnshumanAhirwar on Telegram",
+                        onClick = {
+                            openTelegramChannel(context, "AnshumanAhirwar")
+                        },
+                    )
+
+                    SettingsActionCard(
                         icon = Icons.Filled.CloudDownload,
                         iconContainer = if (updateInfo.isUpdateAvailable) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
                         iconTint = if (updateInfo.isUpdateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryContainer,
@@ -1302,6 +1351,24 @@ fun SettingsScreen(
                             }
                         },
                     )
+
+                    SettingsActionCard(
+                        icon = Icons.Filled.LibraryMusic,
+                        iconContainer = MaterialTheme.colorScheme.primaryContainer,
+                        iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        title = "Offline Music Source",
+                        subtitle = "Local music folder & playback implementation by Anshuman X",
+                        onClick = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://github.com/maxxcodebug/LastWave-Native-offline-music"),
+                            )
+                            if (!startActivitySafely(context, intent)) {
+                                viewModel.showToast("No browser is available")
+                            }
+                        },
+                    )
+
                 }
             }
         }

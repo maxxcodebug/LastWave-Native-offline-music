@@ -104,32 +104,52 @@ class LocalMusicRepository @Inject constructor(
         displayName: String,
         mimeType: String?,
         size: Long,
-    ): LocalAudioTrackEntity? {
+    ): LocalAudioTrackEntity {
         val retriever = MediaMetadataRetriever()
-        return try {
+
+        // Metadata is best-effort. Some SAF providers expose perfectly
+        // playable audio documents while MediaMetadataRetriever cannot read
+        // metadata through the provider URI. The file must still be imported.
+        runCatching {
             retriever.setDataSource(context, uri)
-            val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                ?.trim().orEmpty().ifBlank { displayName.substringBeforeLast('.') }
-            val artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                ?.trim().orEmpty().ifBlank { "Unknown artist" }
-            val album = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
-                ?.trim().orEmpty()
-            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                ?.toLongOrNull() ?: 0L
-            LocalAudioTrackEntity(
-                uri = uri.toString(),
-                title = title,
-                artist = artist,
-                album = album,
-                durationMs = duration,
-                fileSizeBytes = size,
-                mimeType = mimeType?.takeIf { it.isNotBlank() },
-            )
-        } catch (_: Exception) {
-            null
-        } finally {
-            runCatching { retriever.release() }
         }
+
+        val title = runCatching {
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+        }.getOrNull()
+            ?.trim()
+            .orEmpty()
+            .ifBlank { displayName.substringBeforeLast('.') }
+
+        val artist = runCatching {
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
+        }.getOrNull()
+            ?.trim()
+            .orEmpty()
+            .ifBlank { "Unknown artist" }
+
+        val album = runCatching {
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
+        }.getOrNull()
+            ?.trim()
+            .orEmpty()
+
+        val duration = runCatching {
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                ?.toLongOrNull()
+        }.getOrNull() ?: 0L
+
+        runCatching { retriever.release() }
+
+        return LocalAudioTrackEntity(
+            uri = uri.toString(),
+            title = title,
+            artist = artist,
+            album = album,
+            durationMs = duration,
+            fileSizeBytes = size,
+            mimeType = mimeType?.takeIf { it.isNotBlank() },
+        )
     }
 
     private fun isAudio(name: String, mimeType: String?): Boolean {
