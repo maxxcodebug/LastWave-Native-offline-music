@@ -4,6 +4,7 @@ import android.content.Context
 import com.lastwave.app.BuildConfig
 import com.lastwave.app.data.network.LastFmApiService
 import com.lastwave.app.data.network.LastFmRateGuard
+import com.lastwave.app.data.network.OfflineModeGuard
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,6 +40,7 @@ object NetworkModule {
     fun provideOkHttpClient(
         @ApplicationContext context: Context,
         rateGuard: LastFmRateGuard,
+        offlineModeGuard: OfflineModeGuard,
     ): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
             // Release logging still formats every request and writes logcat
@@ -70,6 +72,7 @@ object NetworkModule {
             .writeTimeout(15, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
             .addInterceptor { chain ->
+                offlineModeGuard.checkNetworkAllowed()
                 val original = chain.request()
                 val isLastFm = original.url.host.endsWith("audioscrobbler.com", ignoreCase = true)
                 val request = if (original.header("User-Agent") != null) {

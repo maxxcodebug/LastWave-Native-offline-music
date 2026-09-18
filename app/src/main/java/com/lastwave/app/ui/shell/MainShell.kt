@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -54,6 +55,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -69,8 +71,12 @@ import com.lastwave.app.ui.common.ExpressiveMotion
 import com.lastwave.app.ui.common.PredictiveBackScreen
 import com.lastwave.app.ui.common.adaptiveContentWidth
 import com.lastwave.app.ui.feed.FeedScreen
+import com.lastwave.app.ui.localmusic.OfflineMusicScreen
+import com.lastwave.app.ui.localmusic.OfflineModeTransitionOverlay
+import com.lastwave.app.ui.localmusic.OfflineModeViewModel
 import com.lastwave.app.ui.home.HomeScreen
 import com.lastwave.app.ui.player.LocalMiniPlayerScrollClearance
+import com.lastwave.app.ui.player.LocalMusicPlayer
 import com.lastwave.app.ui.playlist.PlaylistScreen
 import com.lastwave.app.ui.theme.LiquidGlassPreset
 import com.lastwave.app.ui.theme.LocalLiquidGlass
@@ -150,42 +156,54 @@ fun MainShell(
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val offlineModeViewModel: OfflineModeViewModel = hiltViewModel()
+    val offlineEnabled by offlineModeViewModel.enabled.collectAsStateWithLifecycle()
+    val musicPlayer = LocalMusicPlayer.current
+    var offlineTransitionTarget by remember { androidx.compose.runtime.mutableStateOf<Boolean?>(null) }
     val updateInfo by mainShellViewModel.updateInfo.collectAsStateWithLifecycle()
     val showUpdateBanner = updateInfo.isUpdateAvailable && !updateInfo.isDismissed
     val navigationBackdrop = if (isLiquidGlassBackdropSupported()) rememberLayerBackdrop() else null
 
     Box(Modifier.fillMaxSize()) {
-        val feedIndex = tabs.indexOf(MainTab.FEED)
-        HorizontalPager(
-            state = pagerState,
-            beyondViewportPageCount = 0,
-            modifier = Modifier.fillMaxSize().liquidGlassSource(navigationBackdrop),
-        ) { page ->
-            val isCurrent = page == pagerState.currentPage
-            PredictiveBackScreen(
-                enabled = isCurrent && tabs[page] != MainTab.FEED,
-                onBack = { scope.launch { pagerState.animateScrollToPage(feedIndex) } },
-            ) {
-                when (tabs[page]) {
-                    MainTab.FEED -> FeedScreen(
-                        onOpenSettings = onOpenSettings,
-                        onOpenSearch = onOpenSearch,
-                        onOpenDiscover = onOpenDiscover,
-                        onOpenPlaylist = onOpenPlaylist,
-                        onOpenFeedPlaylist = onOpenFeedPlaylist,
-                        onOpenGenerator = onOpenGenerator,
-                        onOpenFriends = onOpenFriends,
-                        onOpenFriendProfile = onOpenFriendProfile,
-                        onOpenNewReleases = onOpenNewReleases,
-                    )
-                    MainTab.STATS -> HomeScreen(
-                        onOpenSettings = onOpenSettings,
-                        onOpenSearch = onOpenSearch,
-                        onOpenDiscover = onOpenDiscover,
-                        onOpenGenres = onOpenGenres,
-                        onOpenFriends = onOpenFriends,
-                    )
-                    MainTab.PLAYLISTS -> PlaylistScreen(onOpenPlaylist = onOpenPlaylist)
+        if (offlineEnabled) {
+            OfflineMusicScreen(
+                onBack = {
+                    if (offlineTransitionTarget == null) offlineTransitionTarget = false
+                },
+            )
+        } else {
+            val feedIndex = tabs.indexOf(MainTab.FEED)
+            HorizontalPager(
+                state = pagerState,
+                beyondViewportPageCount = 0,
+                modifier = Modifier.fillMaxSize().liquidGlassSource(navigationBackdrop),
+            ) { page ->
+                val isCurrent = page == pagerState.currentPage
+                PredictiveBackScreen(
+                    enabled = isCurrent && tabs[page] != MainTab.FEED,
+                    onBack = { scope.launch { pagerState.animateScrollToPage(feedIndex) } },
+                ) {
+                    when (tabs[page]) {
+                        MainTab.FEED -> FeedScreen(
+                            onOpenSettings = onOpenSettings,
+                            onOpenSearch = onOpenSearch,
+                            onOpenDiscover = onOpenDiscover,
+                            onOpenPlaylist = onOpenPlaylist,
+                            onOpenFeedPlaylist = onOpenFeedPlaylist,
+                            onOpenGenerator = onOpenGenerator,
+                            onOpenFriends = onOpenFriends,
+                            onOpenFriendProfile = onOpenFriendProfile,
+                            onOpenNewReleases = onOpenNewReleases,
+                        )
+                        MainTab.STATS -> HomeScreen(
+                            onOpenSettings = onOpenSettings,
+                            onOpenSearch = onOpenSearch,
+                            onOpenDiscover = onOpenDiscover,
+                            onOpenGenres = onOpenGenres,
+                            onOpenFriends = onOpenFriends,
+                        )
+                        MainTab.PLAYLISTS -> PlaylistScreen(onOpenPlaylist = onOpenPlaylist)
+                    }
                 }
             }
         }
@@ -215,8 +233,23 @@ fun MainShell(
             selectedIndex = pagerState.currentPage,
             onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
             onOpenGenerator = onOpenGenerator,
+            offlineEnabled = offlineEnabled,
+            onToggleOffline = { target ->
+                if (offlineTransitionTarget == null) offlineTransitionTarget = target
+            },
             modifier = Modifier.align(Alignment.BottomCenter),
         )
+
+        offlineTransitionTarget?.let { target ->
+            OfflineModeTransitionOverlay(
+                goingOffline = target,
+                onSwitch = {
+                    musicPlayer.stopAndClear()
+                    offlineModeViewModel.setOfflineMode(target)
+                },
+                onFinished = { offlineTransitionTarget = null },
+            )
+        }
     }
 }
 
@@ -294,6 +327,8 @@ private fun FloatingNavBar(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     onOpenGenerator: () -> Unit,
+    offlineEnabled: Boolean,
+    onToggleOffline: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val liquidGlass = LocalLiquidGlass.current
@@ -331,6 +366,11 @@ private fun FloatingNavBar(
                             onClick = onClick,
                         )
                     }
+
+                    OfflineModeNavItem(
+                        enabled = offlineEnabled,
+                        onClick = { onToggleOffline(!offlineEnabled) },
+                    )
                 }
             }
 
@@ -385,6 +425,11 @@ private fun FloatingNavItem(
         animationSpec = navSpring(),
         label = "navItemBackground",
     )
+    val iconScale by animateFloatAsState(
+        targetValue = if (selected) 1.12f else 1f,
+        animationSpec = navSpring(),
+        label = "navItemIconScale",
+    )
     val contentColor by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = navSpring(),
@@ -410,7 +455,7 @@ private fun FloatingNavItem(
                 imageVector = icon,
                 contentDescription = label,
                 tint = contentColor,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(24.dp).scale(iconScale),
             )
             AnimatedVisibility(
                 visible = selected,
@@ -437,6 +482,60 @@ private fun FloatingNavItem(
                     )
                 }
             }
+        }
+    }
+}
+
+
+@Composable
+private fun OfflineModeNavItem(
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val iconScale by animateFloatAsState(
+        targetValue = if (enabled) 1.16f else 1f,
+        animationSpec = navSpring(),
+        label = "offlineNavIconScale",
+    )
+    val contentColor = if (enabled) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Surface(
+        onClick = onClick,
+        shape = PillShape,
+        color = if (enabled) {
+            MaterialTheme.colorScheme.primaryContainer.copy(
+                alpha = if (LocalLiquidGlass.current) 0.34f else 1f,
+            )
+        } else Color.Transparent,
+        modifier = Modifier
+            .height(48.dp)
+            .animateContentSize(animationSpec = navSpring()),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .padding(horizontal = if (enabled) 18.dp else 12.dp)
+                .height(48.dp),
+        ) {
+            Icon(
+                imageVector = if (enabled) Icons.Filled.MusicNote else Icons.Filled.Home,
+                contentDescription = if (enabled) "Switch to official player" else "Switch to Offline Music",
+                tint = contentColor,
+                modifier = Modifier.size(24.dp).scale(iconScale),
+            )
+            Text(
+                text = if (enabled) "Official" else "Offline",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor,
+                modifier = Modifier.padding(start = 8.dp),
+                maxLines = 1,
+                softWrap = false,
+            )
         }
     }
 }

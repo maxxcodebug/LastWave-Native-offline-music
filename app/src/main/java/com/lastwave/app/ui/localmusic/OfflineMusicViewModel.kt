@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
@@ -40,6 +42,14 @@ class OfflineMusicViewModel @Inject constructor(
             settingsPreferences.settings.first().offlineMusicTreeUri?.let {
                 scan()
             }
+        }
+        viewModelScope.launch {
+            settingsPreferences.settings
+                .map { it.offlineMusicTreeUri }
+                .distinctUntilChanged()
+                .collect { uri ->
+                    if (!uri.isNullOrBlank()) scan()
+                }
         }
     }
 
