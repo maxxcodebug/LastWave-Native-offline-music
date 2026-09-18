@@ -236,12 +236,12 @@ fun MainShell(
             onOpenGenerator = onOpenGenerator,
             offlineEnabled = offlineEnabled,
             onToggleOffline = { target ->
-                if (offlineTransitionTarget == null) offlineTransitionTarget = target
+                if (offlineTransitionTarget.value == null) offlineTransitionTarget.value = target
             },
             modifier = Modifier.align(Alignment.BottomCenter),
         )
 
-        offlineTransitionTarget?.let { target ->
+        offlineTransitionTarget.value?.let { target ->
             OfflineModeTransitionOverlay(
                 goingOffline = target,
                 onSwitch = {
