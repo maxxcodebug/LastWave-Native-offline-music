@@ -93,6 +93,7 @@ Built with **Material 3 Expressive**, LastWave combines effortless ad-free strea
 | <img src="https://api.iconify.design/lucide:wand-2.svg?color=%23C6F100" width="20" height="20" /> | **Smart Playlist Generator** | Algorithmic taste mixes and mood radios generated from your listening history, seed artists, loved tracks, and top genres. |
 | <img src="https://api.iconify.design/lucide:radio.svg?color=%23D51007" width="20" height="20" /> | **Universal Last.fm Scrobbler** | Built-in media scrobbler tracking listening activity across YouTube Music, Spotify, Apple Music, and local players with zero battery drain. |
 | <img src="https://api.iconify.design/lucide:mic.svg?color=%23FFB4A2" width="20" height="20" /> | **Real-Time Synced Lyrics** | Millisecond-accurate animated karaoke lyrics powered by LRCLIB with 8 customizable fluid physics motions. |
+| <img src="https://api.iconify.design/lucide:folder-open.svg?color=%23C6F100" width="20" height="20" /> | **Local Offline Music** | Select a local music folder from internal storage, an SD card, or another accessible storage location and play your own music through the existing Media3 player. |
 | <img src="https://api.iconify.design/lucide:arrow-down-to-line.svg?color=%23C6F100" width="20" height="20" /> | **Offline Downloader** | One-tap downloads saved directly to local storage (`Music/LastWave`), fully tagged with high-res cover art and synchronized `.lrc` lyrics. |
 | <img src="https://api.iconify.design/lucide:compass.svg?color=%2300E5FF" width="20" height="20" /> | **Discovery Feed & Genre DNA** | Personalized recommendation radar with deep genre breakdowns, weekly listening recaps, and instant "Start Mix" radios. |
 | <img src="https://api.iconify.design/lucide:share-2.svg?color=%23C6F100" width="20" height="20" /> | **Cross-Platform Playlist Import** | Instantly import public playlists from Spotify and Apple Music directly into your LastWave library. |
@@ -105,6 +106,7 @@ Built with **Material 3 Expressive**, LastWave combines effortless ad-free strea
 
 - **Language & UI:** 100% Kotlin + Jetpack Compose (Material 3 Expressive)
 - **Audio Engine:** AndroidX Media3 ExoPlayer with lockscreen media controls & Android Auto integration
+- **Local Music:** Android Storage Access Framework for user-selected folders, with local library metadata and Media3 playback
 - **Streaming Catalog:** YouTube Music streaming engine with high-efficiency Opus audio
 - **Scrobbling & Tracking:** Last.fm API with native OS media session tracking
 - **Lyrics Engine:** [LRCLIB](https://lrclib.net) millisecond-synchronized lyrics
@@ -137,6 +139,42 @@ cd LastWave-native
 * <img src="https://api.iconify.design/lucide:sparkles.svg?color=%230088cc" width="16" height="16" align="center" /> **More From Us:** [Join @MaterialYouApp on Telegram](https://t.me/MaterialYouApp)
 * <img src="https://api.iconify.design/lucide:message-square.svg?color=%235865F2" width="16" height="16" align="center" /> **Discord Community:** [Join Discord](https://discord.gg/DmyM2p2fMe)
 * <img src="https://api.iconify.design/lucide:globe.svg?color=%2324A1DE" width="16" height="16" align="center" /> **LastWave Website:** [visit site now](https://lastwave.pages.dev)
+
+---
+
+## <img src="https://api.iconify.design/lucide:folder-open.svg?color=%23C6F100" width="20" height="20" align="center" /> Local Offline Music
+
+LastWave also supports music stored directly on the user's device.
+
+The Local Offline Music service is designed to complement the existing downloader rather than replace it. Users can select a music location through Android's storage picker and access their own local tracks from inside LastWave.
+
+### Music Sources
+
+- Internal device storage
+- SD card storage
+- Other locations exposed by Android's Storage Access Framework
+
+### Offline Music Flow
+
+```text
+First Setup
+├── Online Music
+└── Offline Music
+    ├── Select music location
+    ├── Scan music
+    ├── Local library
+    └── Existing Media3 player
+```
+
+The selected local music remains separate from LastWave-managed downloads in `Music/LastWave`.
+
+### Playback
+
+Local tracks use LastWave's existing Media3 playback architecture, keeping the player experience consistent between online, downloaded, and user-selected local music.
+
+### Contribution
+
+**Anshuman X (`maxxcodebug`)** contributed the Local Offline Music service, including the local music workflow, storage-location selection, local library integration, and integration with the existing playback architecture.
 
 ---
 

@@ -3,6 +3,19 @@
 ## Unreleased
 
 ### Added
+- **Local Offline Music Service — contributed by Anshuman X (`maxxcodebug`).**
+  Adds a dedicated local-music workflow alongside LastWave's existing online
+  streaming and downloaded-track playback. Users can select an accessible
+  music location through Android's storage picker, scan local music, browse it
+  as a local library, and play it through the existing Media3 playback
+  architecture.
+  - Supports user-selected local storage locations, including internal storage
+    and SD-card locations exposed by Android.
+  - Keeps user-selected local music separate from LastWave-managed downloads.
+  - Integrates local playback with the existing player instead of introducing
+    a separate playback engine.
+
+### Added
 - **One-tap "Save album to library" on the album detail screen (#79).**
   Previously an album could only be kept by adding its songs one by one to
   a custom playlist. The album hero now has a save button that stores all
